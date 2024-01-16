@@ -1,50 +1,42 @@
 #!/usr/bin/python3
-"""Defines the AirBnB console."""
-import cmd
-import re
-from shlex import split
-from models import storage
+""" storage model """
+import json
+from os import path
 from models.base_model import BaseModel
-from models.user import User
-from models.state import State
-from models.city import City
-from models.place import Place
-from models.amenity import Amenity
-from models.review import Review
 
 
-def parse(arg):
-    curly_braces = re.search(r"\{(.*?)\}", arg)
-    brackets = re.search(r"\[(.*?)\]", arg)
-    if curly_braces is None:
-        if brackets is None:
-            return [i.strip(",") for i in split(arg)]
-        else:
-            lexer = split(arg[:brackets.span()[0]])
-            retl = [i.strip(",") for i in lexer]
-            retl.append(brackets.group())
-            return retl
-    else:
-        lexer = split(arg[:curly_braces.span()[0]])
-        retl = [i.strip(",") for i in lexer]
-        retl.append(curly_braces.group())
-        return retl
+class FileStorage:
+    """FileStorage class"""
 
+    """private class attributes"""
+    __file_path = 'file.json'
+    __objects = {}
 
-class AIRBNBCommand(cmd.Cmd):
-    """Defines the AIRBnB command interpreter.
+    def all(self):
+        """ return a dictionary"""
+        return FileStorage.__objects
 
-    Attributes:
-        prompt (str): The command prompt.
-    """
+    def new(self, obj):
+        """ set the dictionary """
+        nameClass = obj.__class__.__name__
+        idClass = obj.id
+        key = nameClass+'.'+idClass
+        FileStorage.__objects[key] = obj
 
-    prompt = "(airbnb) "
-    __classes = {
-        "BaseModel",
-        "User",
-        "State",
-        "City",
-        "Place",
-        "Amenity",
-        "Review"
-    }
+    def save(self):
+        """ serialize the object to a JSON file"""
+        data = {}
+        for key, value in FileStorage.__objects.items():
+            data.update({key: value.to_dict()})
+        with open(FileStorage.__file_path, 'w', encoding='utf-8') as file:
+            json.dump(data, file)
+
+    def reload(self):
+        """ deserialize the JSON file into a python object"""
+        if path.exists(FileStorage.__file_path):
+            with open(FileStorage.__file_path, 'r', encoding='utf-8')as file:
+                data = {}
+                data = json.load(file)
+                for key, value in data.items():
+                    val = value['__class__']
+                    FileStorage.__objects[key] = globals()[val](**value)
