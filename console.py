@@ -27,7 +27,7 @@ def errores(x):
 class HBNBCommand(cmd.Cmd):
     """Command example"""
 
-    prompt = '(hbnb) '
+    prompt = '(hbnb) help'
 
     Class_dict = {'BaseModel'}
 
